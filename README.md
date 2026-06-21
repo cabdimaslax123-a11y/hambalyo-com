@@ -1,2 +1,718 @@
-# hambalyo-com
-caadi
+
+<!DOCTYPE html>
+<html lang="so" class="h-full bg-[#1c020c]">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boorarka Hambalyada Arooska - Guud</title>
+    <!-- Tailwind CSS for modern responsive styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for elegant typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Supabase JS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .serif-font {
+            font-family: 'Playfair Display', serif;
+        }
+        /* Custom scrollbar for message wall */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #2a0414;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #d4af37;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="min-h-full flex flex-col text-slate-100 bg-gradient-to-b from-[#3a061c] to-[#120108]">
+
+    <!-- QAABAYNTA SUPABASE & MAGACYADA (Setup Modal - Qarsoon ilaa la gujiyo Gear-ka) -->
+    <div id="setup-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-[#240412] border border-amber-500/30 rounded-2xl max-w-lg w-full p-6 relative shadow-2xl">
+            <button onclick="toggleSetupModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <h3 class="serif-font text-2xl text-amber-400 font-bold mb-2">Habaynta Boorarka Hambalyada</h3>
+            <p class="text-xs text-slate-300 mb-4 leading-relaxed">
+                Halkan ku habayso magacyada lammaanaha arooska iyo isku-xirka Supabase Database-kaaga.
+            </p>
+            <div class="space-y-4 text-sm">
+                <!-- Magacyada Lammaanaha (Groom & Bride Names) -->
+                <div class="bg-[#120108] p-3.5 rounded-xl border border-[#520d2c] space-y-3">
+                    <p class="text-xs font-bold text-amber-400 uppercase tracking-wider">Beddel Magacyada Lammaanaha</p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] text-slate-400 mb-1">MAGACA AROOSKA</label>
+                            <input type="text" id="setup-groom" placeholder="Arooska" class="w-full bg-[#240412] border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:border-amber-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-400 mb-1">MAGACA AROOSADA</label>
+                            <input type="text" id="setup-bride" placeholder="Aroosada" class="w-full bg-[#240412] border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:border-amber-500 focus:outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Supabase Credentials -->
+                <div class="space-y-3">
+                    <p class="text-xs font-bold text-slate-300 uppercase tracking-wider">Isku-xirka Supabase (Faahfaahin)</p>
+                    <div>
+                        <label class="block text-[10px] font-semibold text-slate-400 mb-1">SUPABASE URL</label>
+                        <input type="text" id="supabase-url" placeholder="https://xyz.supabase.co" class="w-full bg-[#120108] border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-semibold text-slate-400 mb-1">SUPABASE ANON KEY</label>
+                        <input type="password" id="supabase-key" placeholder="your-anon-key..." class="w-full bg-[#120108] border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div class="bg-[#120108] p-3 rounded-lg border border-slate-800">
+                    <p class="text-[11px] text-amber-300 font-bold mb-1">Koodhka SQL ee miiska (SQL Editor):</p>
+                    <pre class="text-[10px] text-slate-400 overflow-x-auto p-1 bg-black/40 rounded">
+create table wishes (
+  id bigint generated by default as identity primary key,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  name text not null,
+  relationship text not null,
+  message text not null,
+  likes int default 0
+);</pre>
+                </div>
+                
+                <button onclick="saveAllSettings()" class="w-full bg-amber-500 hover:bg-amber-400 text-[#120108] font-bold py-2.5 rounded-lg transition-all text-sm">
+                    Keydi Isbedelada
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- QAYBTA KORE (Header) -->
+    <header class="relative overflow-hidden py-12 px-4 border-b border-[#4d0c27]">
+        <!-- Qurxin background ah (Aesthetic Background Elements) -->
+        <div class="absolute top-1/2 left-1/4 -translate-y-1/2 -translate-x-1/2 w-72 h-72 bg-rose-900/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute top-1/2 right-1/4 -translate-y-1/2 translate-x-1/2 w-72 h-72 bg-amber-900/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="max-w-4xl mx-auto text-center relative z-10">
+            <!-- Calaamada Dugsiga/Madasha -->
+            <div class="inline-flex items-center gap-2 bg-[#520d2c]/80 border border-amber-500/30 px-4 py-1.5 rounded-full text-xs font-semibold text-amber-400 uppercase tracking-wider mb-6 shadow-md">
+                <svg class="w-4 h-4 animate-pulse" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg>
+                Madasha Farxadda Arooska
+            </div>
+
+            <!-- Magaca Weyn -->
+            <h1 class="serif-font text-4xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-rose-100 to-amber-200 tracking-tight leading-tight">
+                Boorarka Hambalyada Arooska
+            </h1>
+            
+            <p class="mt-4 text-slate-300 max-w-xl mx-auto text-sm md:text-base leading-relaxed">
+                Halkan kala qayb-gal lammaanaha farxaddooda! Reeb ereyo dhiiri-galin iyo duco ah si ay ugu waarto xusuustooda dhabta ah.
+            </p>
+
+            <!-- Lammaanaha (The Couple) - Magacyadu hadda waa Dynamic oo Settings ayaa laga bedelayaa -->
+            <div class="mt-8 inline-flex items-center gap-6 bg-gradient-to-r from-[#2a0414] via-[#520d2c] to-[#2a0414] border border-amber-500/20 px-8 py-4 rounded-2xl shadow-xl">
+                <div class="text-right">
+                    <span class="block text-[10px] uppercase text-amber-400 tracking-widest font-bold">Arooska</span>
+                    <span id="display-groom" class="serif-font text-lg md:text-xl font-bold text-white">Arooska</span>
+                </div>
+                <div class="text-amber-400 text-2xl font-serif">❤️</div>
+                <div class="text-left">
+                    <span class="block text-[10px] uppercase text-amber-400 tracking-widest font-bold">Aroosada</span>
+                    <span id="display-bride" class="serif-font text-lg md:text-xl font-bold text-white">Aroosada</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- QAYBTA DHEXE (Main Content Grid) -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-10 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- ROW 1: FOOMKA REEB HAMBALYADA (Left - 5 Cols) -->
+        <section class="lg:col-span-5 space-y-6">
+            <div class="bg-[#240412] border border-[#520d2c] rounded-2xl p-6 shadow-xl relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-1.5 h-full bg-amber-500"></div>
+                
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="p-2.5 bg-[#4d0c27] rounded-lg text-amber-400">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    </div>
+                    <div>
+                        <h2 class="serif-font text-xl font-bold text-white">Reeb Hambalyadaada</h2>
+                        <p class="text-xs text-slate-400">Daqiiqad gudaheed ku qor fariintaada</p>
+                    </div>
+                </div>
+
+                <!-- FOOMKA (Form) -->
+                <form id="wish-form" onsubmit="submitWish(event)" class="space-y-4">
+                    <!-- Magaca -->
+                    <div>
+                        <label for="form-name" class="block text-xs font-semibold uppercase text-slate-300 mb-1.5 tracking-wider">Magacaaga <span class="text-amber-500">*</span></label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                            </span>
+                            <input type="text" id="form-name" required placeholder="Tusaale: Caasho Cali" class="w-full bg-[#120108] border border-[#520d2c] rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none transition-all">
+                        </div>
+                    </div>
+
+                    <!-- Maxaad u tahay Lammaanaha? -->
+                    <div>
+                        <label for="form-relationship" class="block text-xs font-semibold uppercase text-slate-300 mb-1.5 tracking-wider">Maxaad u tahay Lammaanaha? <span class="text-amber-500">*</span></label>
+                        <select id="form-relationship" required class="w-full bg-[#120108] border border-[#520d2c] rounded-xl px-3 py-3 text-sm text-slate-300 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none transition-all">
+                            <option value="" disabled selected>Dooro booska aad ku xirantahay...</option>
+                            <option value="Waalidiinta">Waalid / Ehel dhow</option>
+                            <option value="Saxiibada">Saaxiib / Garab dhow</option>
+                            <option value="Deriska">Deris wanaag</option>
+                            <option value="Macalimiinta">Macallin</option>
+                            <option value="Ardayda">Arday / Isku fasal</option>
+                            <option value="Kala kale">Kale</option>
+                        </select>
+                    </div>
+
+                    <!-- Fariinta -->
+                    <div>
+                        <label for="form-message" class="block text-xs font-semibold uppercase text-slate-300 mb-1.5 tracking-wider">Fariintaada Hambalyada <span class="text-amber-500">*</span></label>
+                        <textarea id="form-message" required rows="4" placeholder="Qor ereyada ugu macaan ee hambalyada ah... Rabbi ha isku barakeeyo!" class="w-full bg-[#120108] border border-[#520d2c] rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none transition-all resize-none"></textarea>
+                    </div>
+
+                    <!-- Badhanka Dirista (Submit Button) -->
+                    <button type="submit" id="btn-submit" class="w-full bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-950 font-bold py-3 px-6 rounded-xl transition-all shadow-lg shadow-amber-950/40 flex items-center justify-center gap-2">
+                        <span>Reeb Fariintaada</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- ROW 2: LOOXA FARIIMAHA (Right - 7 Cols) -->
+        <section class="lg:col-span-7 flex flex-col space-y-4">
+            
+            <!-- Filter-yada iyo Search-ka (Search & Filters) -->
+            <div class="bg-[#240412] border border-[#520d2c] rounded-2xl p-4 shadow-xl space-y-4">
+                <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center gap-2">
+                        <h2 class="serif-font text-lg font-bold text-white">Looxa Fariimaha Live-ka ah</h2>
+                    </div>
+                    <!-- Search Input -->
+                    <div class="relative w-full md:w-64">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </span>
+                        <input type="text" id="search-input" oninput="filterWishes()" placeholder="Ku raadi magac ama fariin..." class="w-full bg-[#120108] border border-[#4d0c27] rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:border-amber-500 focus:outline-none transition-all">
+                    </div>
+                </div>
+
+                <!-- Qaybaha Xiriirka (Filter Categories) -->
+                <div class="flex flex-wrap gap-1.5" id="filter-buttons-container">
+                    <button onclick="setFilter('Dhamaan')" id="filter-all" class="filter-btn active-filter px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500 text-slate-950 transition-all">
+                        Dhamaan Fariimaha
+                    </button>
+                    <button onclick="setFilter('Waalidiinta')" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#3d0a21] text-slate-300 hover:text-white hover:bg-[#520d2c] transition-all">
+                        Waalidiinta
+                    </button>
+                    <button onclick="setFilter('Saxiibada')" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#3d0a21] text-slate-300 hover:text-white hover:bg-[#520d2c] transition-all">
+                        Saaxiibada
+                    </button>
+                    <button onclick="setFilter('Deriska')" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#3d0a21] text-slate-300 hover:text-white hover:bg-[#520d2c] transition-all">
+                        Deriska
+                    </button>
+                    <button onclick="setFilter('Macalimiinta')" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#3d0a21] text-slate-300 hover:text-white hover:bg-[#520d2c] transition-all">
+                        Macalimiinta
+                    </button>
+                    <button onclick="setFilter('Ardayda')" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#3d0a21] text-slate-300 hover:text-white hover:bg-[#520d2c] transition-all">
+                        Ardayda
+                    </button>
+                </div>
+            </div>
+
+            <!-- GOOBAHA LOOXA (Wishes Wall Area) -->
+            <div id="wishes-wall" class="flex-grow max-h-[550px] overflow-y-auto space-y-4 pr-1">
+                <!-- Wixii fariimo ah ee la soo raro halkan ayay gali doonaan dynamically -->
+                <div class="text-center py-12 text-slate-400">
+                    <svg class="w-12 h-12 mx-auto text-slate-600 mb-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    <p class="text-sm">Fariimaha waa la soo rarayaa...</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- FOOTER (Halkan waxaa lagu dhex daray badhanka qarsoon ee Settings-ka) -->
+    <footer class="bg-[#120108] border-t border-[#3d0a21] py-6 text-center text-xs text-slate-500">
+        <p>© 2026 Boorarka Hambalyada Arooska. Dhammaan xuquuqdu waa dhowran tahay.</p>
+        <div class="mt-1 flex items-center justify-center gap-1.5 text-slate-600">
+            <!-- Double click on this text or click the gear to open settings -->
+            <span ondblclick="toggleSetupModal()" class="cursor-pointer select-none">Waxaa dhisay Saaxiibkaa Abdirabi | Powered by Supabase</span>
+            <button onclick="toggleSetupModal()" class="text-slate-700 hover:text-amber-400 p-1 rounded transition-colors" title="Nidaamka Settings-ka">
+                <svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+            </button>
+        </div>
+    </footer>
+
+    <!-- TOAST NOTIFICATIONS -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full"></div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // HARDCODED CREDENTIALS (Ka saaray /rest/v1/ si uu toos ugu xirmo asalkiisa)
+        const HARDCODED_SUPABASE_URL = "https://zkrpomdsbkukohcupecy.supabase.co";
+        const HARDCODED_SUPABASE_KEY = "sb_publishable_ZloR2XdlEOa69bh2kOa6oQ_Z_gOuLfy";
+
+        // Keydka Fariimaha deegaanka (Local Fallback Wishes)
+        const DEFAULT_WISHES = [
+            {
+                id: 1,
+                name: "Hooyo Xaliimo",
+                relationship: "Waalidiinta",
+                message: "Arooska idinka barakoobo! Labada dhinacba nabad iyo barwaaqo ku waara, carruur khayr qabta na kala hela. Duco walba oo khayr leh waan idiin hibeeyey.",
+                likes: 12,
+                created_at: new Date(Date.now() - 3600000 * 5).toISOString()
+            },
+            {
+                id: 2,
+                name: "Inj. Khaalid",
+                relationship: "Saxiibada",
+                message: "Macaash iyo barwaaqo saaxiibgay! Aad baan ugu faraxsanahay guurkiinna barakaysan. Waxaan idiin rajaynayaa nolol farxad leh oo fadhigeedu yahay jacayl.",
+                likes: 8,
+                created_at: new Date(Date.now() - 3600000 * 24).toISOString()
+            },
+            {
+                id: 3,
+                name: "Macallin Maxamed",
+                relationship: "Macalimiinta",
+                message: "Waxaa tihiin qaar ka mid ah ardaydeydii ugu asluubta badnayd. Labadiinnaba waxaan idiin rajaynayaa mustaqbal ifaya iyo nolol barwaaqo leh.",
+                likes: 5,
+                created_at: new Date(Date.now() - 3600000 * 48).toISOString()
+            }
+        ];
+
+        let supabaseClient = null; 
+        let wishes = [];
+        let currentFilter = 'Dhamaan';
+
+        // URL Cleaner Function to automatically strip trailing '/rest/v1/' or trailing slashes
+        function cleanSupabaseUrl(url) {
+            if (!url) return '';
+            let cleaned = url.trim();
+            // Remove /rest/v1 or /rest/v1/ at the end of the URL
+            cleaned = cleaned.replace(/\/rest\/v1\/?$/, '');
+            // Remove trailing slash if any
+            if (cleaned.endsWith('/')) {
+                cleaned = cleaned.slice(0, -1);
+            }
+            return cleaned;
+        }
+
+        // Marka boggku uu diyaar yahay (DOM Ready)
+        window.onload = function() {
+            // Ror magacyada lammaanaha ee ku jira localStorage
+            loadCoupleNames();
+
+            // Dib u soo rar credentials-ka Supabase haddii ay hore u keydsanaayeen, haddii kale isticmaal kuwa saxda ah ee loo diyaariyey
+            let savedUrl = cleanSupabaseUrl(localStorage.getItem('supabase_url') || HARDCODED_SUPABASE_URL);
+            let savedKey = localStorage.getItem('supabase_key') || HARDCODED_SUPABASE_KEY;
+
+            // Nadiifinta URL iyo Key-ga labadaba
+            if (savedUrl === 'undefined' || !savedUrl.startsWith('http')) {
+                savedUrl = cleanSupabaseUrl(HARDCODED_SUPABASE_URL);
+            }
+            if (savedKey === 'undefined' || savedKey.length < 10) {
+                savedKey = HARDCODED_SUPABASE_KEY;
+            }
+
+            // Buuxi input-yada modal-ka dhexdiisa si uu qofku u arko
+            document.getElementById('supabase-url').value = savedUrl;
+            document.getElementById('supabase-key').value = savedKey;
+
+            if (savedUrl && window.supabase) {
+                try {
+                    // Instantiated using window.supabase to bypass local scope shadowing
+                    supabaseClient = window.supabase.createClient(savedUrl, savedKey);
+                } catch (e) {
+                    console.error("Cillad isku xirka Supabase Client:", e);
+                    showToast("Cillad ayaa ka dhalatay isku xirka Supabase. Fadlan dib u hubi.", "error");
+                }
+            }
+
+            loadWishes();
+        };
+
+        // RARISTA MAGACYADA (Load Couple Names)
+        function loadCoupleNames() {
+            const groom = localStorage.getItem('groom_name') || 'Arooska';
+            const bride = localStorage.getItem('bride_name') || 'Aroosada';
+
+            document.getElementById('display-groom').innerText = groom;
+            document.getElementById('display-bride').innerText = bride;
+
+            // Sido kale ku qor input-yada
+            document.getElementById('setup-groom').value = groom === 'Arooska' ? '' : groom;
+            document.getElementById('setup-bride').value = bride === 'Aroosada' ? '' : bride;
+        }
+
+        // 1. RARISTA FARIIMAHA (Fetch Wishes)
+        async function loadWishes() {
+            if (supabaseClient) {
+                try {
+                    const { data, error } = await supabaseClient
+                        .from('wishes')
+                        .select('*')
+                        .order('created_at', { ascending: false });
+                    
+                    if (error) throw error;
+                    wishes = data || [];
+                } catch (err) {
+                    console.error("Cillad Supabase load:", err);
+                    showToast("Cillad rarista fariimaha Supabase ah, waxaa loo beddelay Habka Demo.", "warning");
+                    loadLocalWishes();
+                }
+            } else {
+                loadLocalWishes();
+            }
+            renderWishes();
+        }
+
+        function loadLocalWishes() {
+            const local = localStorage.getItem('local_wishes');
+            if (local) {
+                try {
+                    wishes = JSON.parse(local);
+                } catch(e) {
+                    wishes = [...DEFAULT_WISHES];
+                }
+            } else {
+                wishes = [...DEFAULT_WISHES];
+                localStorage.setItem('local_wishes', JSON.stringify(wishes));
+            }
+            // Sorteey fariimaha ugu dambeeyay kor ha soo galaan
+            wishes.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        }
+
+        // 2. SOO BANDHIGISTA (Render Wishes on Wall)
+        function renderWishes() {
+            const wall = document.getElementById('wishes-wall');
+            const searchVal = document.getElementById('search-input').value.toLowerCase();
+            
+            // Sifee (Filter) fariimaha
+            let filtered = wishes;
+            
+            // Xiriirka uu doortay
+            if (currentFilter !== 'Dhamaan') {
+                filtered = filtered.filter(w => w.relationship === currentFilter);
+            }
+
+            // Search-ka magaca ama fariinta
+            if (searchVal) {
+                filtered = filtered.filter(w => 
+                    (w.name && w.name.toLowerCase().includes(searchVal)) || 
+                    (w.message && w.message.toLowerCase().includes(searchVal))
+                );
+            }
+
+            if (filtered.length === 0) {
+                wall.innerHTML = `
+                    <div class="text-center py-12 bg-[#240412]/50 border border-dashed border-[#520d2c] rounded-2xl p-6">
+                        <svg class="w-10 h-10 mx-auto text-slate-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0a2 2 0 01-2 2H6a2 2 0 01-2-2m16 0V9a2 2 0 00-2-2H6a2 2 0 00-2 2v4h16z"></path></svg>
+                        <p class="text-sm text-slate-400">Wax fariimo ah oo la helay ma jiraan.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Akhri fariimaha uu hadda qofku "Like" saaray
+            const likedWishesList = JSON.parse(localStorage.getItem('liked_wishes') || '[]');
+
+            let html = '';
+            filtered.forEach(wish => {
+                const timeStr = formatDate(wish.created_at);
+                const badgeColor = getRelationshipBadgeClass(wish.relationship);
+                
+                // Hubi in fariintan horay Like loo saaray
+                const isLiked = likedWishesList.includes(wish.id);
+                
+                // Badhanka like-ta qaabkiisa beddel haddii uu riixay horay
+                const likeBtnClass = isLiked 
+                    ? 'bg-rose-500/20 border border-rose-500/40 text-rose-300' 
+                    : 'bg-[#3d0a21] hover:bg-[#520d2c] text-rose-400 hover:text-rose-300';
+
+                html += `
+                    <div class="bg-[#240412] border border-[#4d0c27] hover:border-amber-500/40 p-5 rounded-xl shadow-lg transition-all duration-300 relative group">
+                        <div class="flex items-start justify-between gap-3 mb-3">
+                            <div>
+                                <span class="font-bold text-white text-base block">${escapeHTML(wish.name)}</span>
+                                <span class="text-[10px] text-slate-400 block mt-0.5">${timeStr}</span>
+                            </div>
+                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${badgeColor}">
+                                ${escapeHTML(wish.relationship)}
+                            </span>
+                        </div>
+                        <p class="text-slate-200 text-xs md:text-sm leading-relaxed whitespace-pre-line">${escapeHTML(wish.message)}</p>
+                        
+                        <!-- Love React -->
+                        <div class="mt-4 pt-3 border-t border-[#3a061c]/50 flex justify-between items-center text-xs">
+                            <span class="text-slate-500">Duco & Hambalyo</span>
+                            <button onclick="likeWish(${wish.id})" class="flex items-center gap-1.5 px-3 py-1 rounded-full ${likeBtnClass} transition-all">
+                                <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20"><path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"></path></svg>
+                                <span class="font-bold">${wish.likes || 0}</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            wall.innerHTML = html;
+        }
+
+        // 3. REEBISTA FARIIN CUSUB (Submit Wish)
+        async function submitWish(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-submit');
+            const name = document.getElementById('form-name').value.trim();
+            const relationship = document.getElementById('form-relationship').value;
+            const message = document.getElementById('form-message').value.trim();
+
+            if (!name || !relationship || !message) {
+                showToast("Fadlan buuxi dhammaan meelaha muhiimka ah (*)", "warning");
+                return;
+            }
+
+            // Daar Animation Loading
+            btn.disabled = true;
+            btn.innerHTML = `<span class="animate-spin rounded-full h-4 w-4 border-b-2 border-slate-950"></span> Dirista fariinta...`;
+
+            const newWish = {
+                name: name,
+                relationship: relationship,
+                message: message,
+                likes: 0,
+                created_at: new Date().toISOString()
+            };
+
+            if (supabaseClient) {
+                try {
+                    const { data, error } = await supabaseClient
+                        .from('wishes')
+                        .insert([newWish])
+                        .select();
+
+                    if (error) throw error;
+                    
+                    showToast("Hambalyadaada si guul leh ayaa loo kaydiyey! Waad ku mahadsantahay.", "success");
+                } catch (err) {
+                    console.error("Cillad Supabase diris:", err);
+                    showToast("Supabase wuu ku guuldareystay, waxaa lagu daray Offline ahaan.", "error");
+                    saveLocalWish(newWish);
+                }
+            } else {
+                saveLocalWish(newWish);
+                showToast("Fariintaada waa la daabacay! (Habka Demo Offline)", "success");
+            }
+
+            // Dib u habaynta foomka
+            document.getElementById('wish-form').reset();
+            btn.disabled = false;
+            btn.innerHTML = `<span>Reeb Fariintaada</span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>`;
+            
+            // Dib u cusboonaysii looxa
+            loadWishes();
+        }
+
+        function saveLocalWish(wish) {
+            wish.id = Date.now();
+            wishes.unshift(wish);
+            localStorage.setItem('local_wishes', JSON.stringify(wishes));
+        }
+
+        // 4. LIKE REACT (Limit to 1 Like per Person)
+        async function likeWish(id) {
+            // Akhri xogta fariimaha horay loo like gareeyey ee local storage
+            let likedWishes = [];
+            try {
+                likedWishes = JSON.parse(localStorage.getItem('liked_wishes') || '[]');
+            } catch (e) {
+                likedWishes = [];
+            }
+
+            // Hubi haddii uu qofku fariintan horay "Like" u saaray
+            if (likedWishes.includes(id)) {
+                showToast("Horey ayaad u gujisay Like-ta fariintan!", "warning");
+                return;
+            }
+
+            // Raadi fariinta
+            const index = wishes.findIndex(w => w.id === id);
+            if (index === -1) return;
+
+            wishes[index].likes = (wishes[index].likes || 0) + 1;
+
+            if (supabaseClient) {
+                try {
+                    const { error } = await supabaseClient
+                        .from('wishes')
+                        .update({ likes: wishes[index].likes })
+                        .eq('id', id);
+
+                    if (error) throw error;
+                } catch (err) {
+                    console.error("Supabase like update failed, locally updated.");
+                    localStorage.setItem('local_wishes', JSON.stringify(wishes));
+                }
+            } else {
+                localStorage.setItem('local_wishes', JSON.stringify(wishes));
+            }
+
+            // Kaydi inuu qofku hadda fariintan "Like" saaray si uusan mar kale u riixin
+            likedWishes.push(id);
+            localStorage.setItem('liked_wishes', JSON.stringify(likedWishes));
+
+            showToast("Waad ku mahadsantahay dhiirigelintaada!", "success");
+            renderWishes();
+        }
+
+        // 5. FILTER BUTTONS FUNCTION
+        function setFilter(filterType) {
+            currentFilter = filterType;
+            
+            const buttons = document.querySelectorAll('.filter-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('active-filter', 'bg-amber-500', 'text-slate-950');
+                btn.classList.add('bg-[#3d0a21]', 'text-slate-300');
+            });
+
+            event.target.classList.add('active-filter', 'bg-amber-500', 'text-slate-950');
+            event.target.classList.remove('bg-[#3d0a21]', 'text-slate-300');
+
+            renderWishes();
+        }
+
+        function filterWishes() {
+            renderWishes();
+        }
+
+        // 6. UTILITIES (Helpers)
+        function toggleSetupModal() {
+            const modal = document.getElementById('setup-modal');
+            modal.classList.toggle('hidden');
+        }
+
+        // BADBAADINTA SETTINGS-KA (Save Supabase & Custom Names)
+        function saveAllSettings() {
+            // 1. Save Names
+            const groomName = document.getElementById('setup-groom').value.trim() || 'Arooska';
+            const brideName = document.getElementById('setup-bride').value.trim() || 'Aroosada';
+
+            localStorage.setItem('groom_name', groomName);
+            localStorage.setItem('bride_name', brideName);
+
+            // 2. Save Supabase Credentials & Auto-Clean URL
+            const rawUrl = document.getElementById('supabase-url').value.trim();
+            const url = cleanSupabaseUrl(rawUrl || HARDCODED_SUPABASE_URL);
+            const key = document.getElementById('supabase-key').value.trim() || HARDCODED_SUPABASE_KEY;
+
+            localStorage.setItem('supabase_url', url);
+            localStorage.setItem('supabase_key', key);
+
+            showToast("Waa guul! Isbedeladii waa la keydiyey, bogga ayaa dib isu rari doona.", "success");
+            setTimeout(() => {
+                window.location.reload();
+            }, 1200);
+        }
+
+        function getRelationshipBadgeClass(rel) {
+            switch (rel) {
+                case 'Waalidiinta': return 'bg-amber-500/20 text-amber-300 border border-amber-500/30';
+                case 'Saxiibada': return 'bg-sky-500/20 text-sky-300 border border-sky-500/30';
+                case 'Deriska': return 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+                case 'Macalimiinta': return 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30';
+                case 'Ardayda': return 'bg-pink-500/20 text-pink-300 border border-pink-500/30';
+                default: return 'bg-slate-500/20 text-slate-300 border border-slate-500/30';
+            }
+        }
+
+        function formatDate(isoString) {
+            try {
+                const date = new Date(isoString);
+                const now = new Date();
+                const diffMs = now - date;
+                const diffMins = Math.floor(diffMs / 60000);
+                const diffHours = Math.floor(diffMs / 3600000);
+
+                if (diffMins < 1) return 'Hadda un';
+                if (diffMins < 60) return `Kahor ${diffMins} daqiiqo`;
+                if (diffHours < 24) return `Kahor ${diffHours} saac`;
+                
+                return date.toLocaleDateString('so', { day: 'numeric', month: 'short', year: 'numeric' });
+            } catch (e) {
+                return 'Maanta';
+            }
+        }
+
+        // Custom Toast Notification system
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            let bg = 'bg-[#240412] border-amber-500';
+            let iconColor = 'text-amber-400';
+            let iconSvg = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+
+            if (type === 'success') {
+                bg = 'bg-emerald-950/90 border-emerald-500/50 text-emerald-200';
+                iconColor = 'text-emerald-400';
+                iconSvg = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+            } else if (type === 'error') {
+                bg = 'bg-rose-950/90 border-rose-500/50 text-rose-200';
+                iconColor = 'text-rose-400';
+                iconSvg = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+            } else if (type === 'warning') {
+                bg = 'bg-amber-950/90 border-amber-500/50 text-amber-200';
+                iconColor = 'text-amber-400';
+                iconSvg = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>`;
+            }
+
+            toast.className = `flex items-center gap-3 p-4 rounded-xl border ${bg} shadow-2xl transition-all duration-300 translate-y-2 opacity-0 text-xs md:text-sm`;
+            toast.innerHTML = `
+                <div class="${iconColor} flex-shrink-0">${iconSvg}</div>
+                <div class="flex-grow font-semibold">${message}</div>
+            `;
+
+            container.appendChild(toast);
+
+            // Trigger animation
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            // Remove after 4 seconds
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 4000);
+        }
+
+        // Safe HTML Escape function protecting against null/undefined and empty values
+        function escapeHTML(str) {
+            if (str === null || str === undefined) return '';
+            return String(str).replace(/[&<>'"]/g, 
+                tag => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[tag] || tag)
+            );
+        }
+    </script>
+</body>
+</html>
